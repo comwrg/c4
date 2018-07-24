@@ -1,12 +1,28 @@
-all: clean c4 alithmetic
+CC = gcc
+CFLAGS = -std=c99 -g 
+
+TESTS = func_main
+
+RED = '\033[0;31m'
+NC  = '\033[0m' # No Color
+
+
+all: c4 alithmetic
 
 c4:
-	gcc -g -o c4 c4.c
+	$(CC) $(CFLAGS) -o c4 c4.c
 
 alithmetic:
-	gcc -g -o arithmetic arithmetic.c
+	$(CC) $(CFLAGS) -g -o arithmetic arithmetic.c
+
+test:
+	for t in $(TESTS); do \
+		./c4 test/$$t.c > $$t.out; \
+		diff test/$$t.out $$t.out > /dev/null || echo ${RED}Test $$t failed.${NC}; \
+	done
 
 clean:
-	-rm c4 arithmetic
+	-rm c4 arithmetic *.out
 
+.PHONY: all test
 # vim:ft=make

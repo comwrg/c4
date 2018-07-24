@@ -1,0 +1,4 @@
+language: c
+script: make && make test
+
+# vim: et:ts=2:sw=2:

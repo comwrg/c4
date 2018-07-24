@@ -1,4 +1,5 @@
 # c4
+[![Build Status](https://travis-ci.org/comwrg/c4.svg?branch=master)](https://travis-ci.org/comwrg/c4)   
 参考一下：
 * https://github.com/rswier/c4
 * http://lotabout.me/2015/write-a-C-interpreter-1/
