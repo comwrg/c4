@@ -13,7 +13,8 @@ long *text, *pc,
      *stack, *sp
      ;
 char  *data, *pdata;
-long ax;
+
+void *eax, *ax;
 
 struct identifier {
     int token;
@@ -50,6 +51,8 @@ char *KEYWORD_MAIN = "main";
 void next();
 
 void dispose() {
+    if (eax)
+        free(eax),     eax     = NULL;
     if (src)
         free(src),     src     = NULL;
     if (text)
@@ -70,6 +73,9 @@ void fail(char *tip) {
 
 
 void init_malloc() {
+    eax = malloc(4); // 4 bytes
+    ax = (((int) eax) + 2); // last 2 bytes in eax
+
     src = (char *) malloc(POOL_SIZE);
     if (!src) {
         fail("malloc src failed");

@@ -13,3 +13,28 @@
 2. 代码量大, 功能对于新手来说还是太多， 想一下子全部都实现出来， 难度还是太大
 
 然后我现在想了一个办法， 先实现最最最最简单的功能， 再慢慢加功能。
+
+## Knowledge of assembly
+
+### eax, ax, ah, al
+<table>
+   <tr>
+      <td> 00000000 </td>
+      <td> 00000000 </td>
+      <td> 00000000 </td>
+      <td> 00000000 </td>
+   </tr>
+   <tr>
+      <td colspan="4" align="center"> eax </td>
+   </tr>
+   <tr>
+      <td colspan="2"> </td>
+      <td colspan="2" align="center"> ax </td>
+   </tr>
+   <tr>
+      <td colspan="2"> </td>
+      <td align="center"> ah </td>
+      <td align="center"> al </td>
+   </tr>
+</table>
+
