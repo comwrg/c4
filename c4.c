@@ -7,12 +7,13 @@
 char *src, *psrc;
 int line; // record line number in src
 
-int token, token_val;
+long token, token_val;
 
-int *text, *pc, 
-    *stack, *sp
-    ;
-int ax;
+long *text, *pc, 
+     *stack, *sp
+     ;
+char  *data, *pdata;
+long ax;
 
 struct identifier {
     int token;
@@ -27,13 +28,21 @@ struct identifier   *symbols, *psymbols,
                     *pmain // point to func main
                     ;
 
+// instructions
 enum {
-    EXIT = 256
+    EXIT = 256, PUSH,
+
+    IB, /* IB is instructions begin mark */
+        PRTF, 
+    IE /* IE is instructions end mark */
 };
+char *INSTRUCTIONS = "printf";
 
 enum { 
-    Id = 128, Fun, Num,
-    KB, Int, Return, KE // Kb is Keywords begin mark, Ke is Keywords end mark
+    Id = 128, Fun, Num, Sys,
+    KB, /* KB is Keywords begin mark */
+        Int, Return, 
+    KE /* KE is Keywords end mark */
 };
 char *KEYWORDS = "int return";
 char *KEYWORD_MAIN = "main";
@@ -42,9 +51,15 @@ void next();
 
 void dispose() {
     if (src)
-        free(src), src = NULL;
+        free(src),     src     = NULL;
     if (text)
-        free(text), text = NULL;
+        free(text),    text    = NULL;
+    if (stack)
+        free(stack),   stack   = NULL;
+    if (symbols)
+        free(symbols), symbols = NULL;
+    if (data)
+        free(data),    data    = NULL;
 }
 
 void fail(char *tip) {
@@ -62,13 +77,13 @@ void init_malloc() {
     psrc = src;
     line = 1;
 
-    text = (int *) malloc(POOL_SIZE);
+    text = (long *) malloc(POOL_SIZE);
     if (!text) {
         fail("malloc text failed");
     }
     pc = text;
 
-    stack = (int *) malloc(POOL_SIZE);
+    stack = (long *) malloc(POOL_SIZE);
     if (!stack) {
         fail("malloc stack failed");
     }
@@ -81,7 +96,11 @@ void init_malloc() {
     psymbols = symbols;
     memset(symbols, 0, POOL_SIZE);
 
-
+    data = (char *) malloc(POOL_SIZE);
+    if (!data) {
+        fail("malloc data failed");
+    }
+    pdata = data;
 }
 
 void init_symbols() {
@@ -93,6 +112,13 @@ void init_symbols() {
     for (int i = KB+1; i < KE; ++i) { // loop keywords
         next();
         psymbols->token = i;
+    }
+
+    psrc = INSTRUCTIONS;
+    for (int i = IB+1; i < IE; ++i) {
+        next();
+        psymbols->token = Sys;
+        psymbols->value = i;
     }
         
         
@@ -149,6 +175,7 @@ void next() {
             }
 
             token = psymbols->token;
+            token_val = psymbols->value;
             return;
         } else if (token >= '1' && token <= '9') { // number
             // only support dec for the time being
@@ -157,6 +184,20 @@ void next() {
                 token_val = token_val*10  +  *psrc++ - '0';
             }
             token = Num; // mark Num
+            return;
+        } else if (token == '"') { // string
+            token_val = (long) pdata;
+            for (; *psrc != '\0' && *psrc != '"'; ++pdata) {
+                *pdata = *psrc++;
+                if (*pdata == '\\') {
+                    *pdata = *psrc++;
+                    if (*pdata == 'n') {
+                        *pdata = '\n';
+                    }
+                }
+            }
+            ++psrc;
+            *pdata++ = '\0';
             return;
         }
 
@@ -182,14 +223,28 @@ void function_parameter() {
 }
 
 void function_body() {
-    if (token == Return) {
-        match(Return);
-        *++pc = EXIT;
-        if (token != ';') {
-            *++sp = token_val;
-        } 
-        match(token);
-        match(';');
+    while (token != '}') {
+        if (token == Return) {
+            match(Return);
+            *++pc = EXIT;
+            if (token != ';') {
+                *++sp = token_val;
+            } 
+            match(token);
+            match(';');
+        } else if (token == Sys) { // system func
+            long func = token_val;
+            match(Sys);
+            match('(');
+            while (token != ')') {
+                *++pc = PUSH;
+                *++pc = token_val;
+                match(token);
+            }
+            *++pc = func;
+            match(')');
+            match(';');
+        }
     }
 }
 
@@ -216,7 +271,7 @@ void global_declaration() {
     if (token == '(') {
         psymbols->class = Fun;
         *++pc = 0;  // text and text delimiter
-        psymbols->value = (size_t) pc;
+        psymbols->value = (size_t) (pc+1);
         function_declaration();
     }
 
@@ -230,9 +285,23 @@ void program() {
 }
 
 void eval() {
-    while (1) {
-        int op = *pc++;
-        if (op == EXIT) { printf("exit(%d)\n", ax = *sp--); return; }
+    int op;
+    pc = pmain->value;
+    while(op = *pc++) {
+        switch (op) {
+            case EXIT:
+                printf("exit(%d)\n", ax = *sp--); 
+                return; 
+            case PRTF:
+                ax = *sp--;
+                printf((char *) ax);
+                break;
+            case PUSH:
+                *++sp = *pc++;
+                break;
+            default:
+                fail("unknow instruction");
+        }
     }
 }
 

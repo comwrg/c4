@@ -1,7 +1,8 @@
 CC = gcc
 CFLAGS = -std=c99 -g 
 
-TESTS = func_main
+TESTS = func_main \
+		printf
 
 RED = '\033[0;31m'
 NC  = '\033[0m' # No Color
@@ -24,5 +25,5 @@ test:
 clean:
 	-rm c4 arithmetic *.out
 
-.PHONY: all test
+.PHONY: c4 all test
 # vim:ft=make
