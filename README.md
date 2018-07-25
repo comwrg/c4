@@ -1,5 +1,19 @@
 # c4
-[![Build Status](https://travis-ci.org/comwrg/c4.svg?branch=master)](https://travis-ci.org/comwrg/c4)   
+<table>
+   <tr>
+      <td align="center"> master </td>
+      <td align="center"> dev </td>
+   </tr>
+   <tr>
+      <td>
+         <a href="https://travis-ci.org/comwrg/c4"><img src="https://travis-ci.org/comwrg/c4.svg?branch=master"></a>
+      </td>
+      <td>
+         <a href="https://travis-ci.org/comwrg/c4"><img src="https://travis-ci.org/comwrg/c4.svg?branch=dev"></a>
+      </td>
+   </tr>
+</table>
+
 参考一下：
 * https://github.com/rswier/c4
 * http://lotabout.me/2015/write-a-C-interpreter-1/
