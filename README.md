@@ -38,3 +38,12 @@
    </tr>
 </table>
 
+## c -> assembly
+
+### return
+```assembly
+; return 2333;
+movl    $2333, %eax
+ret
+```
+
