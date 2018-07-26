@@ -7,11 +7,11 @@
 char *src, *psrc;
 int line; // record line number in src
 
-long token, token_val;
+int token, token_val;
 
-long *text, *pc, 
-     *stack, *sp
-     ;
+int *text, *pc, 
+    *stack, *sp
+    ;
 char  *data, *pdata;
 
 void *eax, *ax;
@@ -83,17 +83,17 @@ void init_malloc() {
     psrc = src;
     line = 1;
 
-    text = (long *) malloc(POOL_SIZE);
+    text = malloc(POOL_SIZE);
     if (!text) {
         fail("malloc text failed");
     }
     pc = text;
 
-    stack = (long *) malloc(POOL_SIZE);
+    stack = malloc(POOL_SIZE);
     if (!stack) {
         fail("malloc stack failed");
     }
-    sp = stack;
+    sp = (int)stack + POOL_SIZE;
 
     symbols = (struct identifier *) malloc(POOL_SIZE);
     if (!symbols) {
@@ -234,7 +234,7 @@ void function_body() {
             match(Return);
             *++pc = EXIT;
             if (token != ';') {
-                *++sp = token_val;
+                *--sp = token_val;
             } 
             match(token);
             match(';');
@@ -296,14 +296,14 @@ void eval() {
     while(op = *pc++) {
         switch (op) {
             case EXIT:
-                printf("exit(%d)\n", ax = *sp--); 
+                printf("exit(%d)\n", ax = *sp++); 
                 return; 
             case PRTF:
-                ax = *sp--;
+                ax = *sp++;
                 printf((char *) ax);
                 break;
             case PUSH:
-                *++sp = *pc++;
+                *--sp = *pc++;
                 break;
             default:
                 fail("unknow instruction");
