@@ -4,8 +4,9 @@ CFLAGS = -std=c99 -g -m32
 TESTS = func_main \
 		printf
 
-RED = '\033[0;31m'
-NC  = '\033[0m' # No Color
+RED   = '\033[0;31m'
+GREEN = '\033[0;32m'
+NC    = '\033[0m' # No Color
 
 
 all: c4 alithmetic
@@ -17,9 +18,15 @@ alithmetic:
 	$(CC) $(CFLAGS) -g -o arithmetic arithmetic.c
 
 test:
-	for t in $(TESTS); do \
+	@for t in $(TESTS); do \
 		./c4 test/$$t.c > $$t.out; \
-		diff test/$$t.out $$t.out > /dev/null || echo ${RED}Test $$t failed.${NC}; \
+		diff test/$$t.out $$t.out; \
+		if [ $$? -eq 0 ]; then \
+			echo ${GREEN}Test $$t success.${NC}; \
+		else \
+			echo ${RED}Test $$t failed.${NC}; \
+			exit 1; \
+		fi \
 	done
 
 clean:
