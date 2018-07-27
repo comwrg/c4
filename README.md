@@ -1,15 +1,26 @@
 # c4
 <table>
    <tr>
+      <td> </td>
       <td align="center"> master </td>
       <td align="center"> dev </td>
    </tr>
    <tr>
-      <td>
+      <td align="center"> Travis CI </td>
+      <td align="center">
          <a href="https://travis-ci.org/comwrg/c4"><img src="https://travis-ci.org/comwrg/c4.svg?branch=master"></a>
       </td>
-      <td>
+      <td align="center">
          <a href="https://travis-ci.org/comwrg/c4"><img src="https://travis-ci.org/comwrg/c4.svg?branch=dev"></a>
+      </td>
+   </tr>
+   <tr>
+      <td align="center"> Codecov </td>
+      <td align="center">
+         <a href="https://codecov.io/gh/comwrg/c4"><img src="https://codecov.io/gh/comwrg/c4/branch/master/graph/badge.svg" /></a>
+      </td>
+      <td align="center">
+         <a href="https://codecov.io/gh/comwrg/c4"><img src="https://codecov.io/gh/comwrg/c4/branch/dev/graph/badge.svg" /></a>
       </td>
    </tr>
 </table>

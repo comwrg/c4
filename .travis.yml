@@ -1,8 +1,14 @@
 language: c
-script: make && make test
+script: 
+  - make && make test
+  - gcov c4.c arithmetic.c
+
 sudo: required
 
 before_install:
   - sudo apt-get install -y gcc-multilib
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 # vim: et:ts=2:sw=2:

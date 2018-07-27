@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -g -m32
+CFLAGS = -std=c99 -g -m32 -coverage
 
 TESTS = func_main \
 		printf
