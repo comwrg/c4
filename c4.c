@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define POOL_SIZE 256*1024 
 
@@ -10,7 +11,7 @@ int line; // record line number in src
 int token, token_val;
 
 int *text, *pc, 
-    *stack, *sp
+    *stack, *sp, *bp
     ;
 char  *data, *pdata;
 
@@ -31,7 +32,13 @@ struct identifier   *symbols, *psymbols,
 
 // instructions
 enum {
-    EXIT = 256, PUSH,
+    EXIT = 256, CALL, 
+
+    PUSH_A, POP_A, // push [address]
+    PUSH_C, POP_C, // push [const value]
+    
+    MOV_A, // mov [address], [address] 
+    MOV_C, // mov [address], [const value]
 
     IB, /* IB is instructions begin mark */
         PRTF, 
@@ -93,7 +100,7 @@ void init_malloc() {
     if (!stack) {
         fail("malloc stack failed");
     }
-    sp = (int)stack + POOL_SIZE;
+    bp = sp = (int)stack + POOL_SIZE;
 
     symbols = (struct identifier *) malloc(POOL_SIZE);
     if (!symbols) {
@@ -192,7 +199,7 @@ void next() {
             token = Num; // mark Num
             return;
         } else if (token == '"') { // string
-            token_val = (long) pdata;
+            token_val = pdata;
             for (; *psrc != '\0' && *psrc != '"'; ++pdata) {
                 *pdata = *psrc++;
                 if (*pdata == '\\') {
@@ -234,20 +241,29 @@ void function_body() {
             match(Return);
             *++pc = EXIT;
             if (token != ';') {
-                *--sp = token_val;
+                *++pc = token_val;
             } 
             match(token);
             match(';');
         } else if (token == Sys) { // system func
-            long func = token_val;
+            int func = token_val;
             match(Sys);
             match('(');
+            *++pc = PUSH_A; *++pc = &bp; // push bp
+            *++pc = MOV_A; *++pc = &sp; *++pc = &bp; // mov bp, sp, let bp = sp
+            int *stk = malloc(1024); int *pstk = stk; // init a stack for reverse params, direction is low -> high
             while (token != ')') {
-                *++pc = PUSH;
-                *++pc = token_val;
+                *++pstk = token_val;
                 match(token);
             }
-            *++pc = func;
+            while (stk != pstk) { // reverse params
+                *++pc = PUSH_C;
+                *++pc = *pstk--;
+            }
+            free(stk); stk = NULL;
+            *++pc = CALL; *++pc = func; // call func
+            *++pc = POP_C; *++pc = &bp; // pop bp
+
             match(')');
             match(';');
         }
@@ -291,19 +307,47 @@ void program() {
 }
 
 void eval() {
-    int op;
+    int op, func, offset, *chs, *args;
     pc = pmain->value;
     while(op = *pc++) {
         switch (op) {
             case EXIT:
-                printf("exit(%d)\n", ax = *sp++); 
+                printf("exit(%d)\n", *pc++); 
                 return; 
-            case PRTF:
-                ax = *sp++;
-                printf((char *) ax);
+            case MOV_A:
+                **((int **)(pc++)) = **((int **)(pc++));
                 break;
-            case PUSH:
-                *--sp = *pc++;
+            case MOV_C:
+                **((int **)(pc++)) = *pc++;
+                break;
+            case PUSH_A:
+                *--sp = **((int **)(pc++));
+               break;
+            case PUSH_C:
+               *--sp = *pc++;
+               break;
+            case POP_A:
+                **((int **)(pc++)) = *sp++;
+                break;
+            case POP_C:
+                *pc++ = *sp++;
+                break;
+            case CALL:
+                func = *pc++;
+                switch(func) {
+                    case PRTF:
+                        chs = *sp++;
+                        args = malloc(1024);
+                        offset = 0;
+                        while (bp != sp) {
+                            *(args + offset++) = *sp++;
+                        }
+                        vprintf((const char *) chs, (va_list) args);
+                        free(args); args = NULL;
+                        break;
+                    default:
+                        fail("unknow func");
+                }
                 break;
             default:
                 fail("unknow instruction");
