@@ -1,6 +1,8 @@
 CC = gcc
 CFLAGS = -std=c99 -g -m32 -coverage
 
+OBJS = c4.o instruction.o
+
 TESTS = func_main \
 		printf
 
@@ -11,8 +13,11 @@ NC    = '\033[0m' # No Color
 
 all: c4 alithmetic
 
-c4:
-	$(CC) $(CFLAGS) -o c4 c4.c
+c4: $(OBJS)
+	$(CC) $(CFLAGS) -o c4 $(OBJS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 alithmetic:
 	$(CC) $(CFLAGS) -g -o arithmetic arithmetic.c
@@ -30,7 +35,7 @@ test:
 	done
 
 clean:
-	-rm c4 arithmetic *.out
+	-rm c4 arithmetic *.o *.gcno
 
 .PHONY: c4 all test
 # vim:ft=make
