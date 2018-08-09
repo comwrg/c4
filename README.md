@@ -72,3 +72,17 @@ movl    $2333, %eax
 ret
 ```
 
+### local variable
+```assembly
+; int a = 0;
+subl	$16, %esp
+movl	$0, -4(%ebp)
+```
+局部变量实现是在栈上分配一个空间   
+第一行将`esp`减去16， 即在栈上分配16个字节   
+第二行把前4个字节赋值0   
+
+现在出现了一个问题， 为啥分配16个字节， 而不是4个字节， Google发现是*字节对齐*的原因。
+
+* https://www.zhihu.com/question/20871464
+
