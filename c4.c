@@ -20,7 +20,6 @@ void *eax, *ax;
 
 struct identifier {
     int token;
-    int hash;
     char *name;
     int class;
     int type;
@@ -104,12 +103,15 @@ void init_malloc() {
 void init_symbols() {
     psrc = KEYWORD_MAIN;
     next(); 
+    psymbols->token = token;
+    psymbols->name = token_val;
     pmain = psymbols;
 
     psrc = KEYWORDS;
     for (int i = KB+1; i < KE; ++i) { // loop keywords
         next();
         psymbols->token = i;
+        psymbols->name = token_val;
     }
 
     psrc = INSTRUCTIONS;
@@ -117,6 +119,7 @@ void init_symbols() {
         next();
         psymbols->token = Sys;
         psymbols->value = i;
+        psymbols->name = token_val;
     }
         
         
@@ -161,19 +164,17 @@ void next() {
             }
 
             for (psymbols = symbols; psymbols->token; ++psymbols) {
-                if (psymbols->hash == hash && !memcmp(psymbols->name, pos, psrc - pos)) {
-                    break;
+                if (!memcmp(psymbols->name, pos, psrc - pos)) {
+                    token = psymbols-> token;
+                    token_val = psymbols->value;
+                    return;
                 }
             }
 
-            if (!psymbols->token) { // not found
-                psymbols->name = pos;
-                psymbols->hash = hash;
-                psymbols->token = Id;
-            }
+            // not found
+            token = Id;
+            token_val = pos;
 
-            token = psymbols->token;
-            token_val = psymbols->value;
             return;
         } else if (token >= '1' && token <= '9') { // number
             // only support dec for the time being
@@ -273,6 +274,10 @@ void global_declaration() {
     match(Id);
 
     psymbols->type = type;
+    if (!psymbols->token) {
+        psymbols->token = token;
+        psymbols->name = token_val;
+    }
 
     if (token == '(') {
         psymbols->class = Fun;
