@@ -1,10 +1,11 @@
 CC = gcc
-CFLAGS = -std=c99 -g -m32 -coverage
+CFLAGS = -std=c99 -Wall -Wextra -g -m32 -coverage 
 
 OBJS = c4.o instruction.o
 
 TESTS = func_main \
-		printf
+		printf \
+		local
 
 RED   = '\033[0;31m'
 GREEN = '\033[0;32m'

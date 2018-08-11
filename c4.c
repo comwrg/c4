@@ -9,7 +9,7 @@
 char *src, *psrc;
 int line; // record line number in src
 
-int token, token_val;
+int token, token_val, token_len;
 
 int *text, *pc, 
     *stack, *sp, *bp
@@ -29,6 +29,12 @@ struct identifier {
 struct identifier   *symbols, *psymbols,
                     *pmain // point to func main
                     ;
+
+struct ParamInfo {
+    int flag;
+    int value;
+    int len;
+};
 
 enum { 
     Id = 128, Fun, Num, Sys,
@@ -174,6 +180,7 @@ void next() {
             // not found
             token = Id;
             token_val = pos;
+            token_len = psrc - pos;
 
             return;
         } else if (token >= '1' && token <= '9') { // number
@@ -200,7 +207,7 @@ void next() {
             return;
         }
 
-        char *chs = "(){};";
+        char *chs = "(){};=";
         int ch;
         while (ch = *chs++) {
             if (token == ch) {
@@ -222,6 +229,10 @@ void function_parameter() {
 }
 
 void function_body() {
+    struct identifier *local_symbols = malloc(POOL_SIZE);
+    memset(local_symbols, 0, POOL_SIZE);
+    struct identifier *p;
+    int offset = 0;
     while (token != '}') {
         if (token == Return) {
             match(Return);
@@ -235,24 +246,75 @@ void function_body() {
             int func = token_val;
             match(Sys);
             match('(');
-            w_push('%', &bp); // push %bp
-            w_mov('%', &sp, &bp); // mov %sp, %bp
-            int *stk = malloc(1024); int *pstk = stk; // init a stack for reverse params, direction is low -> high
-            while (token != ')') {
-                *++pstk = token_val;
+
+            // init a stack for reverse params, direction is low -> high
+            struct ParamInfo *stk = malloc(POOL_SIZE); 
+            struct ParamInfo *pstk = stk;             
+            for (++pstk; token != ')'; ++pstk) {
+                pstk->flag = token;
+                pstk->value = token_val;
+                pstk->len = token_len;
                 match(token);
             }
-            while (stk != pstk) { // reverse params
-                w_push('$', *pstk--);
+            for (--pstk; stk != pstk; --pstk) { // reverse params
+                if (pstk->flag == Id) {
+                    for (p = local_symbols; p->token; ++p) { // loop for find id
+                        if (!memcmp(p->name, pstk->value, pstk->len)) {
+                            w_push_offset(p->value, &bp);
+                            break;
+                        }
+                    }
+                    if (!p->token) {
+                        fail("variable can be used before define");
+                    }
+                } else if (pstk->flag == Num || pstk->flag == '"') {
+                    w_push('$', pstk->value);
+                }
             }
             free(stk); stk = NULL;
             w_call(func); // call func
-            w_pop('$', &bp); // pop bp
 
             match(')');
             match(';');
+        } else if (token == Int) {
+            match(Int);
+            if (token != Id) {
+                fail("should be variable name after variable type");
+            }
+            if (!psymbols->token) {
+                for (p = local_symbols; p->token; ++p) {
+                    if (!memcmp(p->name, token_val, token_len)) {
+                        // found in local symbols, err
+                        fail("local variable redefine");
+                    }
+                }
+                p->token = Id;
+                p->name = token_val;
+                p->type = Int;
+                
+                w_sub('$', 4, &sp); // sub $4, $esp 
+                offset -= 4;
+                p->value = offset;
+            } else {
+                // TODO
+                // found in global symbols
+            }
+            match(Id);
+            if (token == '=') {
+                match('=');
+                if (token != Num) {
+                    fail("an integer variable can only be assigned to an integer");
+                }
+                w_mov_offset('$', token_val, p->value, &bp); // e.g. mov $0, -4(%ebp)
+                match(Num);
+            } else if (token == ',') {
+                // TODO like int a,b, define serveral variables one time
+            }
+            match(';');
         }
     }
+
+    free(local_symbols); local_symbols = NULL;
 }
 
 void function_declaration() {
@@ -296,7 +358,7 @@ void program() {
 }
 
 void eval() {
-    int op, func, offset, *chs, *args;
+    int op, func, offset, *chs, *args, flag;
     pc = pmain->value;
     while(op = *pc++) {
         switch (op) {
@@ -306,6 +368,7 @@ void eval() {
             case MOV:  mov();  break;
             case PUSH: push(); break;
             case POP:  pop();  break;
+            case SUB:  sub();  break;
             case CALL:
                 func = *pc++;
                 switch(func) {
@@ -313,7 +376,14 @@ void eval() {
                         chs = *sp++;
                         args = malloc(1024);
                         offset = 0;
-                        while (bp != sp) {
+                        for (char *tk = chs; *tk != '\0'; ++tk) {
+                            if (*tk != '%') {
+                                continue;
+                            }
+                            if (*(tk+1) == '%') {
+                                ++tk;
+                                continue;
+                            }
                             *(args + offset++) = *sp++;
                         }
                         vprintf((const char *) chs, (va_list) args);
