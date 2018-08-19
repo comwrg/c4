@@ -12,7 +12,7 @@ int line; // record line number in src
 int token, token_val, token_len;
 
 int *text, *pc, 
-    *stack, *sp, *bp
+    *stack, *esp, *ebp
     ;
 char  *data, *pdata;
 
@@ -90,7 +90,7 @@ void init_malloc() {
     if (!stack) {
         fail("malloc stack failed");
     }
-    bp = sp = (int)stack + POOL_SIZE;
+    ebp = esp = (int)stack + POOL_SIZE;
 
     symbols = (struct identifier *) malloc(POOL_SIZE);
     if (!symbols) {
@@ -260,7 +260,7 @@ void function_body() {
                 if (pstk->flag == Id) {
                     for (p = local_symbols; p->token; ++p) { // loop for find id
                         if (!memcmp(p->name, pstk->value, pstk->len)) {
-                            w_push_offset(p->value, &bp);
+                            w_push_offset(p->value, &ebp);
                             break;
                         }
                     }
@@ -292,7 +292,7 @@ void function_body() {
                 p->name = token_val;
                 p->type = Int;
                 
-                w_sub('$', 4, &sp); // sub $4, $esp 
+                w_sub('$', 4, &esp); // sub $4, $esp 
                 offset -= 4;
                 p->value = offset;
             } else {
@@ -305,7 +305,7 @@ void function_body() {
                 if (token != Num) {
                     fail("an integer variable can only be assigned to an integer");
                 }
-                w_mov_offset('$', token_val, p->value, &bp); // e.g. mov $0, -4(%ebp)
+                w_mov_offset('$', token_val, p->value, &ebp); // e.g. mov $0, -4(%ebp)
                 match(Num);
             } else if (token == ',') {
                 // TODO like int a,b, define serveral variables one time
@@ -373,7 +373,7 @@ void eval() {
                 func = *pc++;
                 switch(func) {
                     case PRTF:
-                        chs = *sp++;
+                        chs = *esp++;
                         args = malloc(1024);
                         offset = 0;
                         for (char *tk = chs; *tk != '\0'; ++tk) {
@@ -384,7 +384,7 @@ void eval() {
                                 ++tk;
                                 continue;
                             }
-                            *(args + offset++) = *sp++;
+                            *(args + offset++) = *esp++;
                         }
                         vprintf((const char *) chs, (va_list) args);
                         free(args); args = NULL;

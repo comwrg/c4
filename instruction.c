@@ -66,12 +66,12 @@ void push() {
     if (flag == '%') {
         int offset = *pc++;
         if (offset) {
-            *--sp = *((int *)((**(int **)pc++) + offset));
+            *--esp = *((int *)((**(int **)pc++) + offset));
         } else {
-            *--sp = **(int **)pc++;
+            *--esp = **(int **)pc++;
         }
     } else if (flag == '$') {
-       *--sp = *pc++;
+       *--esp = *pc++;
     }
 }
 
@@ -84,9 +84,9 @@ void w_pop(char flag, int src) {
 void pop() {
     char flag = *pc++;
     if (flag == '%') {
-        **((int **)(pc++)) = *sp++;
+        **((int **)(pc++)) = *esp++;
     } else if (flag == '$') {
-        *pc++ = *sp++;
+        *pc++ = *esp++;
     }
 }
 

@@ -7,7 +7,7 @@
 #define INSTRUCTION_H
 
 int *pc;
-int *sp;
+int *esp;
 
 // instructions
 enum {
