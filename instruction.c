@@ -29,16 +29,17 @@ void mov() {
     char flag = *pc++;
     int src;
     if (flag == '%') {
-        src = **((int **)(pc++));
+        src = **(int **)get_reg_addr(*pc++);
     } else if (flag == '$') {
         src = *pc++;
     }
     int offset = *pc++;
-    if (offset) {
-        int *dst_address = **(int **)pc++ + offset;
-        *dst_address = src;
+    int dst = *pc++;
+    int r = get_reg_addr(dst);
+    if (r) {
+        *(int *)(*(int *)r + offset) = src;
     } else {
-        **(int **)pc++ = src;
+        *(int *)dst = src;
     }
 }
 
@@ -65,10 +66,12 @@ void push() {
     char flag = *pc++;
     if (flag == '%') {
         int offset = *pc++;
-        if (offset) {
-            *--esp = *((int *)((**(int **)pc++) + offset));
+        int src = *pc++;
+        int r = get_reg_addr(src);
+        if (r) {
+            *--esp = *(int *)((*(int *)r) + offset);
         } else {
-            *--esp = **(int **)pc++;
+            *--esp = *(int *)(src + offset);
         }
     } else if (flag == '$') {
        *--esp = *pc++;
@@ -107,10 +110,19 @@ void w_sub(char flag, int src, int **dst) {
 
 void sub() {
     char flag = *pc++;
+    int src;
     if (flag == '%') {
-        **((int **) pc++) -= **((int **) pc++);
+        src =  **(int **)get_reg_addr(*pc++);
     } else if (flag == '$') {
-        **((int **) pc++) -= *pc++;
+        src = *pc++;
+    }
+
+    int dst = *pc++;
+    int r = get_reg_addr(dst);
+    if (r) {
+        **(int **)r -= src;
+    } else {
+        *(int *)dst -= src;
     }
 }
 // vim: et:ts=4:sw=4:

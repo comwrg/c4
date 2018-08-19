@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall -Wextra -g -m32 -coverage 
 
-OBJS = c4.o instruction.o
+OBJS = c4.o instruction.o register.o
 
 TESTS = func_main \
 		printf \

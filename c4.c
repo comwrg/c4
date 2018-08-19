@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "instruction.h"
+#include "register.h"
 
 #define POOL_SIZE 256*1024 
 
@@ -260,7 +261,7 @@ void function_body() {
                 if (pstk->flag == Id) {
                     for (p = local_symbols; p->token; ++p) { // loop for find id
                         if (!memcmp(p->name, pstk->value, pstk->len)) {
-                            w_push_offset(p->value, &ebp);
+                            w_push_offset(p->value, EBP);
                             break;
                         }
                     }
@@ -292,7 +293,7 @@ void function_body() {
                 p->name = token_val;
                 p->type = Int;
                 
-                w_sub('$', 4, &esp); // sub $4, $esp 
+                w_sub('$', 4, ESP); // sub $4, $esp 
                 offset -= 4;
                 p->value = offset;
             } else {
@@ -305,7 +306,7 @@ void function_body() {
                 if (token != Num) {
                     fail("an integer variable can only be assigned to an integer");
                 }
-                w_mov_offset('$', token_val, p->value, &ebp); // e.g. mov $0, -4(%ebp)
+                w_mov_offset('$', token_val, p->value, EBP); // e.g. mov $0, -4(%ebp)
                 match(Num);
             } else if (token == ',') {
                 // TODO like int a,b, define serveral variables one time
