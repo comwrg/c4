@@ -4,7 +4,8 @@ CFLAGS = -std=c99 -Wall -Wextra -g -m32 -coverage
 OBJS = c4.o instruction.o register.o
 
 TESTS = func_main \
-		printf \
+		printf_str \
+		printf_int \
 		local
 
 RED   = '\033[0;31m'
