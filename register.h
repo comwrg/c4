@@ -5,11 +5,11 @@
 #ifndef REGISTER_H
 #define REGISTER_H
 
-void *eax, *ax;
+void *eax;
 int *ebp, *esp;
 
 enum {
-    EAX, AX, 
+    EAX,
     EBP, ESP
 };
 

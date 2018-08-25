@@ -17,7 +17,7 @@ int *text, *pc,
     ;
 char  *data, *pdata;
 
-void *eax, *ax;
+void *eax;
 
 struct identifier {
     int token;
@@ -72,7 +72,6 @@ void fail(char *tip) {
 
 void init_malloc() {
     eax = malloc(4); // 4 bytes
-    ax = (((int) eax) + 2); // last 2 bytes in eax
 
     src = (char *) malloc(POOL_SIZE);
     if (!src) {
