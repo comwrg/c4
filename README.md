@@ -100,3 +100,128 @@ movl	$0, -4(%ebp)
 
 * https://www.zhihu.com/question/20871464
 
+## 四则运算分析
+```
+gcc -m32 -O0 -S demo.c
+```
+---
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 1, b = 2, c = 3, d;
+    d = a + b + c;
+    printf("%d\n", d);
+    return 2333;
+}
+```
+```assembly
+_main:
+	pushl	%ebp
+	movl	%esp, %ebp
+	subl	$24, %esp       ; allocate space to local variables
+	movl	$1, -12(%ebp)   ; a = 1
+	movl	$2, -16(%ebp)   ; b = 2
+	movl	$3, -20(%ebp)   ; c = 3
+	movl	-12(%ebp), %ecx ; ecx = a
+	movl	-16(%ebp), %edx ; edx = b
+	addl	%edx, %ecx      ; ecx += edx
+	movl	-20(%ebp), %edx ; edx = c
+	addl	%ecx, %edx      ; edx += ecx
+	movl	%edx, -24(%ebp) ; d = edx
+	subl	$8, %esp
+	pushl	-24(%ebp)
+	leal	lC0-L1$pb(%eax), %eax
+	pushl	%eax
+	call	_printf
+	addl	$16, %esp
+	movl	$2333, %eax
+	leave
+	ret
+```
+---
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 1, b = 2, c = 3, d;
+    d = a + b * c;
+    printf("%d\n", d);
+    return 2333;
+}
+```
+```assembly
+_main:
+	pushl	%ebp
+	movl	%esp, %ebp
+	subl	$24, %esp
+	movl	$1, -12(%ebp)   ; a = 1
+	movl	$2, -16(%ebp)   ; b = 2
+	movl	$3, -20(%ebp)   ; c = 3
+	movl	-16(%ebp), %edx ; edx = b
+	imull	-20(%ebp), %edx ; edx *= c
+	movl	-12(%ebp), %ecx ; ecx = a
+	addl	%ecx, %edx      ; edx += ecx
+	movl	%edx, -24(%ebp)
+	subl	$8, %esp
+	pushl	-24(%ebp)
+	leal	lC0-L1$pb(%eax), %eax
+	pushl	%eax
+	call	_printf
+	addl	$16, %esp
+	movl	$2333, %eax
+	leave
+	ret
+```
+总结起来就是先算运算符级别高的那个， 然后继续往下算
+
+---
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 1,
+        b = 2,
+        c = 3,
+        d = 4,
+        e = 5,
+        f = 6,
+        g    ;
+
+
+    g = a*b + c*d + e*f;
+    printf("%d\n", g);
+    return 2333;
+}
+```
+```assembly
+_main:
+	pushl	%ebp
+	movl	%esp, %ebp
+	subl	$40, %esp
+	movl	$1, -12(%ebp)   ; a
+	movl	$2, -16(%ebp)   ; b
+	movl	$3, -20(%ebp)   ; c
+	movl	$4, -24(%ebp)   ; d
+	movl	$5, -28(%ebp)   ; e
+	movl	$6, -32(%ebp)   ; f
+	movl	-12(%ebp), %edx ; edx = a
+	movl	%edx, %ecx      ; ecx = edx
+	imull	-16(%ebp), %ecx ; ecx *= b, ecx = a*b now
+	movl	-20(%ebp), %edx ; edx = c
+	imull	-24(%ebp), %edx ; edx *= d, edx = c*d now
+	addl	%edx, %ecx      ; ecx += edx, ecx = a*b + c*d now
+	movl	-28(%ebp), %edx ; edx = e
+	imull	-32(%ebp), %edx ; edx *= f
+	addl	%ecx, %edx      ; edx += ecx
+	movl	%edx, -36(%ebp)
+	subl	$8, %esp
+	pushl	-36(%ebp)
+	leal	lC0-L1$pb(%eax), %eax
+	pushl	%eax
+	call	_printf
+	addl	$16, %esp
+	movl	$2333, %eax
+	leave
+```
+然而还是不知道咋写。。
