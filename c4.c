@@ -17,8 +17,6 @@ int *text, *pc,
     ;
 char  *data, *pdata;
 
-void *eax;
-
 struct identifier {
     int token;
     char *name;
@@ -51,6 +49,10 @@ void next();
 void dispose() {
     if (eax)
         free(eax),     eax     = NULL;
+    if (ecx)
+        free(ecx),     ecx     = NULL;
+    if (edx)
+        free(edx),     edx     = NULL;
     if (src)
         free(src),     src     = NULL;
     if (text)
@@ -72,6 +74,8 @@ void fail(char *tip) {
 
 void init_malloc() {
     eax = malloc(4); // 4 bytes
+    ecx = malloc(4);
+    edx = malloc(4);
 
     src = (char *) malloc(POOL_SIZE);
     if (!src) {

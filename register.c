@@ -3,6 +3,8 @@
 int *get_reg_addr(int r) {
     switch (r) {
         case EAX: return &eax;
+        case ECX: return &ecx;
+        case EDX: return &edx;
         case EBP: return &ebp;
         case ESP: return &esp;
         default:  return 0;
