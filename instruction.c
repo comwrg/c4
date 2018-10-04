@@ -2,6 +2,7 @@
  * use AT&T syntax
  */
 #include "instruction.h"
+#include "register.h"
 #include <stdio.h>
 
 char *INSTRUCTIONS = "printf";
@@ -96,6 +97,30 @@ void pop() {
 void w_call(void* func) {
     *++pc = CALL;
     *++pc = func;
+}
+
+void w_add(char flag, int src, int **dst) {
+    *++pc = ADD;
+    *++pc = flag;
+    *++pc = src;
+    *++pc = dst;
+}
+
+void add() {
+    char flag = *pc++;
+    int src;
+    if (flag == '%') {
+        src = **(int **)get_reg_addr(*pc++);
+    } else if (flag == '$') {
+        src = *pc++;
+    }
+    int dst = *pc++;
+    int r = get_reg_addr(dst);
+    if (r) {
+        **(int **)r += src;
+    } else {
+        *(int *)dst += src;
+    }
 }
 
 /**

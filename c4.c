@@ -35,8 +35,14 @@ struct ParamInfo {
     int len;
 };
 
+struct ArithmeticInfo {
+    int type;
+    int value;
+};
+
 enum { 
     Id = 128, Fun, Num, Sys,
+    Op, Add, Sub, Mul, Div, Inc, Dec,
     KB, /* KB is Keywords begin mark */
         Int, Return, 
     KE /* KE is Keywords end mark */
@@ -45,6 +51,18 @@ char *KEYWORDS = "int return";
 char *KEYWORD_MAIN = "main";
 
 void next();
+
+int get_op_level(int op) {
+    switch (op) {
+        case '(': case ')':
+            return 4;
+        case Mul: case Div:
+            return 3;
+        case Add: case Sub:
+            return 2;
+    }
+    return 0;
+}
 
 void dispose() {
     if (eax)
@@ -209,6 +227,44 @@ void next() {
             ++psrc;
             *pdata++ = '\0';
             return;
+        } else if (token == '+') {
+            if (*psrc == '+') {
+                token = Op;
+                token_val = Inc;
+            } else if (*psrc == '=') {
+                // TODO, +=
+            } else {
+                token = Op;
+                token_val = Add;
+            }
+            return;
+        } else if (token == '-') {
+            if (*psrc == '-') {
+                token = Op;
+                token_val = Dec;
+            } else if (*psrc == '=') {
+                // TODO, -=
+            } else {
+                token = Op;
+                token_val = Sub;
+            }
+            return;
+        } else if (token == '*') {
+            if (*psrc == '=') {
+                // TODO, *=
+            } else {
+                token = Op;
+                token_val = Mul;
+            }
+            return;
+        } else if (token == '/') {
+            if (*psrc == '=') {
+                // TODO, =/
+            } else {
+                token = Op;
+                token_val = Div;
+            }
+            return;
         }
 
         char *chs = "(){};=";
@@ -224,6 +280,7 @@ void next() {
 
 void match(int tk) {
     if (token != tk) {
+        printf("token is %c, tk is %c\n", token, tk);
         fail("token != tk");
     }
     next();
@@ -306,11 +363,80 @@ void function_body() {
             match(Id);
             if (token == '=') {
                 match('=');
-                if (token != Num) {
-                    fail("an integer variable can only be assigned to an integer");
+                // Shunting Yard Algorithm
+                struct ArithmeticInfo *output, *pOutput;
+                pOutput = output = malloc(POOL_SIZE);
+                int *opStack, *pOpStack;
+                pOpStack = opStack = malloc(POOL_SIZE);
+                for (; token != ';'; next()) {
+                    if (token == Num) {
+                        pOutput->type = Num;
+                        pOutput->value = token_val;
+                        ++pOutput;
+                    } else if (token == Op) {
+                        while (pOpStack > opStack
+                            && pOpStack[-1] == Op
+                            && get_op_level(token_val) <= get_op_level(pOpStack[-1])) {
+                            pOutput->type = Op;
+                            pOutput->value = pOpStack[-1];
+                            ++pOutput; --pOpStack;
+                        }
+                        *pOpStack++ = token_val;
+                    } else if (token == '(') {
+                        *pOpStack++ = '(';
+                    } else if (token == ')') {
+                        for (; pOpStack >= opStack && pOpStack[-1] != '('; --opStack) {
+                            pOutput->type = Op;
+                            pOutput->value = pOpStack[-1];
+                        }
+                        if (pOpStack[-1] != '(') {
+                            fail("bracket mismatch");
+                        }
+                    }
                 }
-                w_mov_offset('$', token_val, p->value, EBP); // e.g. mov $0, -4(%ebp)
-                match(Num);
+
+                for (; pOpStack > opStack; --pOpStack, ++pOutput) {
+                    pOutput->type = Op;
+                    pOutput->value = pOpStack[-1];
+                }
+
+                // gcc only use ecx and edx to calc expr, not use stack. orz
+                // i think i can't handle this, i need use stack
+
+                struct ArithmeticInfo *eOutput = pOutput;
+                pOutput = output;
+                int t, idx = 0;
+                for (; pOutput < eOutput; ++pOutput) {
+                    /* printf("%d ", pOutput->value); */
+                    if (pOutput->type == Num) {
+                        if (idx == 0) {
+                            w_mov('$', pOutput->value, ECX);
+                        } else if (idx == 1) {
+                            w_mov('$', pOutput->value, EDX);
+                        } else {
+                            fail("idx > 2");
+                        }
+                        ++idx;
+                    } else if (pOutput->type == Op) {
+                        if (pOutput->value == Add) {
+                            if (idx != 2) {
+                                fail("error, add need 2 params");
+                            }
+                            w_add('%', EDX, ECX);
+                        }
+                        idx = 0;
+                    } else {
+                        fail("can't handle pOutput->type");
+                    }
+                }
+
+
+
+                free(output), output = NULL;
+                free(opStack), opStack = NULL;
+                /* w_mov_offset('$', token_val, p->value, EBP); // e.g. mov $0, -4(%ebp) */
+                w_mov_offset('%', ECX, p->value, EBP);
+                /* match(Num); */
             } else if (token == ',') {
                 // TODO like int a,b, define serveral variables one time
             }
@@ -373,6 +499,7 @@ void eval() {
             case PUSH: push(); break;
             case POP:  pop();  break;
             case SUB:  sub();  break;
+            case ADD:  add();  break;
             case CALL:
                 func = *pc++;
                 switch(func) {

@@ -11,7 +11,7 @@ int *esp;
 
 // instructions
 enum {
-    EXIT = 256, CALL, PUSH, POP, MOV, SUB, 
+    EXIT = 256, CALL, PUSH, POP, MOV, ADD, SUB, 
 
     IB, /* IB is instructions begin mark */
         PRTF, 

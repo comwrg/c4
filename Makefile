@@ -6,7 +6,8 @@ OBJS = c4.o instruction.o register.o
 TESTS = func_main \
 		printf_str \
 		printf_int \
-		local
+		local \
+		arithmetic
 
 RED   = '\033[0;31m'
 GREEN = '\033[0;32m'
