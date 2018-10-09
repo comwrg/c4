@@ -7,7 +7,8 @@ TESTS = func_main \
 		printf_str \
 		printf_int \
 		local \
-		arithmetic_add
+		arithmetic_add \
+		arithmetic_sub
 
 RED   = '\033[0;31m'
 GREEN = '\033[0;32m'

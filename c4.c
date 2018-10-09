@@ -423,6 +423,11 @@ void function_body() {
                                 fail("error, add need 2 params");
                             }
                             w_add('%', EDX, ECX);
+                        } else if (pOutput->value == Sub) {
+                            if (idx != 2) {
+                                fail("error, sub need 2 params");
+                            }
+                            w_sub('%', EDX, ECX);
                         }
                         idx = 0;
                     } else {
