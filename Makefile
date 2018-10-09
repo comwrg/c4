@@ -27,16 +27,36 @@ alithmetic:
 	$(CC) $(CFLAGS) -g -o arithmetic arithmetic.c
 
 test:
-	@for t in $(TESTS); do \
+	@passed=0; \
+	failed=0; \
+	n=0; \
+	for t in $(TESTS); do \
 		./c4 test/$$t.c > $$t.out; \
-		diff test/$$t.out $$t.out; \
+		diff test/$$t.out $$t.out > $$t.diff; \
 		if [ $$? -eq 0 ]; then \
-			echo ${GREEN}Test $$t success.${NC}; \
+			echo $$n. ${GREEN}PASSED: $$t${NC}; \
+			rm $$t.out; \
+			passed=$$(echo $$(($$passed+1))); \
 		else \
-			echo ${RED}Test $$t failed.${NC}; \
-			exit 1; \
-		fi \
-	done
+			echo $$n. ${RED}FAILED: $$t${NC}; \
+			echo "$$(cat $$t.diff)"; \
+			failed=$$(echo $$(($$failed+1))); \
+		fi; \
+		rm $$t.diff; \
+		n=$$(echo $$(($$n+1))); \
+	done; \
+	echo ; \
+	echo ---------------------; \
+	if [ $$failed -eq 0 ]; then \
+		echo ${GREEN}All PASSED${NC}; \
+	else \
+		echo ${GREEN}SUM: $$n \ \ ${RED}FAILED: $$failed${NC}; \
+	fi; \
+	echo ---------------------; \
+	if [ $$failed -ne 0 ]; then \
+		exit 1; \
+	fi; \
+
 
 clean:
 	-rm c4 arithmetic *.o *.gcno
