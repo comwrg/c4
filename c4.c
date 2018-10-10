@@ -6,6 +6,11 @@
 #include "register.h"
 
 #define POOL_SIZE 256*1024 
+#define fail(tip) { \
+            dispose(); \
+            printf("%s:%d: %s\n", __FILE__, __LINE__, tip); \
+            exit(-1); \
+        }
 
 char *src, *psrc;
 int line; // record line number in src
@@ -82,13 +87,6 @@ void dispose() {
     if (data)
         free(data),    data    = NULL;
 }
-
-void fail(char *tip) {
-    dispose();
-    printf("error: %s\n", tip);
-    exit(-1);
-}
-
 
 void init_malloc() {
     eax = malloc(4); // 4 bytes
