@@ -8,6 +8,7 @@
 
 int *pc;
 int *esp;
+int S;
 
 // instructions
 enum {

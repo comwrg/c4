@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "register.h"
 
 int *get_reg_addr(int r) {
@@ -11,6 +12,18 @@ int *get_reg_addr(int r) {
     }
 }
 
+const char *get_reg_name(int r) {
+    static char name[128];
+    switch (r) {
+        case EAX: sprintf(name, "%s", "eax"); break;
+        case ECX: sprintf(name, "%s", "ecx"); break;
+        case EDX: sprintf(name, "%s", "edx"); break;
+        case EBP: sprintf(name, "%s", "ebp"); break;
+        case ESP: sprintf(name, "%s", "esp"); break;
+        default:  sprintf(name, "%d", r);     break;
+    }
+    return name;
+}
 
 
 

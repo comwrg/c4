@@ -540,11 +540,25 @@ int main(int argc, char **argv) {
     }
     init_malloc();
     init_symbols();
-    read_src(*(argv+1), src);
+
+    char *file;
+    for (int i = 1; i < argc; ++i) {
+        char *str = *(argv + i);
+        if (*str == '-') {
+            for (++str; *str; ++str) {
+                if (*str == 'S')
+                    S = 1;
+            }
+        } else {
+            file = str;
+        }
+    }
+    read_src(file, src);
 
     program();
 
-    eval();
+    if (!S)
+        eval();
 
     dispose();
     return 0;
