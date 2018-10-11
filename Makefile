@@ -1,4 +1,4 @@
-CC = gcc
+CC ?= gcc
 CFLAGS = -std=c99 -Wall -Wextra -g -m32 -coverage 
 
 OBJS = c4.o instruction.o register.o
