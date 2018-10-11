@@ -110,7 +110,7 @@ void init_malloc() {
     if (!stack) {
         fail("malloc stack failed");
     }
-    ebp = esp = (int)stack + POOL_SIZE;
+    ebp = esp = (int)stack + POOL_SIZE - sizeof(int);
 
     symbols = (struct identifier *) malloc(POOL_SIZE);
     if (!symbols) {
